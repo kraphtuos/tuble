@@ -38,7 +38,7 @@ fn num_guesses_required(possible_stations: &[Station]) -> (Station, usize) {
 }
 
 fn main() {
-    let stations: Vec<Station> = (0..269).map(Station::from).collect();
-    let (best_station, total_guesses_required) = num_guesses_required(&stations);
+    let all_stations = Station::all_stations();
+    let (best_station, total_guesses_required) = num_guesses_required(&all_stations);
     println!("{} {}", best_station.get_name(), total_guesses_required);
 }

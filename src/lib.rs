@@ -44,4 +44,8 @@ impl Station {
 
         Outcome { stops, zones }
     }
+
+    pub fn all_stations() -> Vec<Self> {
+        (0..STATIONS.len()).map(Station::from).collect()
+    }
 }
