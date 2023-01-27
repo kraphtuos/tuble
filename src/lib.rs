@@ -1,12 +1,12 @@
 const STATIONS: [&str; 269] = include!("../data/stations.json");
 const DISTANCES: [[[u8; 2]; 269]; 269] = include!("../data/distances.json");
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub struct Station {
     idx: usize,
 }
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ZoneOutcome {
     Correct,
     OneAway,
@@ -14,10 +14,23 @@ pub enum ZoneOutcome {
     MoreThanTwo,
 }
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Outcome {
     pub stops: u8,
     pub zones: ZoneOutcome,
+}
+
+impl Outcome {
+    pub fn to_string(&self) -> String {
+        let Self { stops, zones } = self;
+        let zones = match zones {
+            ZoneOutcome::Correct => "0",
+            ZoneOutcome::OneAway => "1",
+            ZoneOutcome::TwoAway => "2",
+            ZoneOutcome::MoreThanTwo => ">2",
+        };
+        format!("{} stops, {} zones", stops, zones)
+    }
 }
 
 impl Station {

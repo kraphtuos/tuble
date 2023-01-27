@@ -1,11 +1,14 @@
-use std::collections::HashMap;
+mod app;
+
+use crate::app::{Component, Props};
+use std::collections::BTreeMap;
 use tuble::*;
 
 fn get_possible_states(
     target_station: &Station,
     possible_stations: &[Station],
-) -> HashMap<Outcome, Vec<Station>> {
-    let mut map: HashMap<Outcome, Vec<Station>> = HashMap::new();
+) -> BTreeMap<Outcome, Vec<Station>> {
+    let mut map: BTreeMap<Outcome, Vec<Station>> = BTreeMap::new();
     for &station in possible_stations {
         map.entry(target_station.get_outcome(&station))
             .or_default()
@@ -16,7 +19,7 @@ fn get_possible_states(
 
 fn num_guesses_required(possible_stations: &[Station]) -> (Station, usize) {
     if possible_stations.len() == 1 {
-        return (possible_stations[0], 0);
+        return (possible_stations[0], 1);
     }
     possible_stations
         .iter()
@@ -39,6 +42,12 @@ fn num_guesses_required(possible_stations: &[Station]) -> (Station, usize) {
 
 fn main() {
     let all_stations = Station::all_stations();
-    let (best_station, total_guesses_required) = num_guesses_required(&all_stations);
-    println!("{} {}", best_station.get_name(), total_guesses_required);
+    let (best_guess, max_guesses) = num_guesses_required(&all_stations);
+    let possible_outcomes = get_possible_states(&best_guess, &all_stations);
+    yew::Renderer::<Component>::with_props(Props {
+        best_guess,
+        max_guesses,
+        possible_outcomes,
+    })
+    .render();
 }
