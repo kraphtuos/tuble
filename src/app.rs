@@ -22,16 +22,16 @@ pub fn Component(props: &Props) -> Html {
     let selection = use_state(|| None::<Outcome>);
     let stations: Vec<_> = possible_outcomes.values().flatten().collect();
     if stations.len() == 1 {
-        html! { <div class="container">{format!("answer: {}", stations[0].get_name())}</div> }
+        html! { <div class="container">{format!("answer: {}", stations[0])}</div> }
     } else {
         let select = {
             let options = possible_outcomes
-                .keys()
-                .map(|outcome| {
+                .iter()
+                .map(|(outcome, possible_stations)| {
                     let s = selection.clone();
                     let outcome = outcome.to_owned();
                     let onclick = Callback::from(move |_| s.set(Some(outcome)));
-                    html! {<li><a class="dropdown-item" {onclick}>{outcome.to_string()}</a></li>}
+                    html! {<li><a class="dropdown-item" {onclick}>{format!("{} - {}", outcome.to_string(), possible_stations.len())}</a></li>}
                 })
                 .collect::<Html>();
             let onclick = {
@@ -67,7 +67,7 @@ pub fn Component(props: &Props) -> Html {
         html! {
             <div class="container">
                 <div class="container">
-                    {format!("best guess: {}", best_guess.get_name())}
+                    {format!("best guess: {}", best_guess)}
                 </div>
                 <div class="container">
                     {format!("max guesses: {}", max_guesses)}

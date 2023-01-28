@@ -33,16 +33,18 @@ impl Outcome {
     }
 }
 
+impl std::fmt::Display for Station {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", STATIONS[self.idx])
+    }
+}
+
 impl Station {
     pub fn from(idx: usize) -> Self {
         if idx >= STATIONS.len() {
             panic!("Cannot handle station idx: {}", idx);
         }
         Self { idx }
-    }
-
-    pub fn get_name(self: &Self) -> String {
-        STATIONS[self.idx].into()
     }
 
     pub fn get_outcome(self: &Self, other: &Self) -> Outcome {
