@@ -1,6 +1,5 @@
 mod app;
 
-use crate::app::{Component, Props};
 use std::collections::BTreeMap;
 use tuble::*;
 
@@ -40,6 +39,17 @@ fn num_guesses_required(possible_stations: &[Station]) -> (Station, usize) {
         .unwrap()
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+fn main() {
+    let all_stations = Station::all_stations();
+    let (best_guess, max_guesses) = num_guesses_required(&all_stations);
+    print!("{}, {}", best_guess, max_guesses);
+}
+
+#[cfg(target_arch = "wasm32")]
+use crate::app::{Component, Props};
+
+#[cfg(target_arch = "wasm32")]
 fn main() {
     let all_stations = Station::all_stations();
     let (best_guess, max_guesses) = num_guesses_required(&all_stations);
