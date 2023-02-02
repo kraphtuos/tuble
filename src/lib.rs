@@ -6,6 +6,12 @@ pub struct Station {
     idx: usize,
 }
 
+impl std::fmt::Display for Station {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", STATIONS[self.idx])
+    }
+}
+
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ZoneOutcome {
     Correct,
@@ -20,8 +26,8 @@ pub struct Outcome {
     pub zones: ZoneOutcome,
 }
 
-impl Outcome {
-    pub fn to_string(&self) -> String {
+impl std::fmt::Display for Outcome {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let Self { stops, zones } = self;
         let zones = match zones {
             ZoneOutcome::Correct => "0",
@@ -29,13 +35,7 @@ impl Outcome {
             ZoneOutcome::TwoAway => "2",
             ZoneOutcome::MoreThanTwo => ">2",
         };
-        format!("{} stops, {} zones", stops, zones)
-    }
-}
-
-impl std::fmt::Display for Station {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", STATIONS[self.idx])
+        write!(f, "{} stops, {} zones", stops, zones)
     }
 }
 

@@ -1,4 +1,5 @@
 mod app;
+mod dropdown;
 
 use std::collections::BTreeMap;
 use tuble::*;
