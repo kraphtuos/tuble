@@ -52,13 +52,12 @@ use crate::app::{Component, Props};
 
 #[cfg(target_arch = "wasm32")]
 fn main() {
-    let all_stations = Station::all_stations();
-    let (best_guess, max_guesses) = num_guesses_required(&all_stations);
-    let possible_outcomes = get_possible_states(&best_guess, &all_stations);
+    let possible_stations = Station::all_stations();
+    let (best_guess, max_guesses) = num_guesses_required(&possible_stations);
     yew::Renderer::<Component>::with_props(Props {
+        possible_stations,
         best_guess,
         max_guesses,
-        possible_outcomes,
     })
     .render();
 }

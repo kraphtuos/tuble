@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, fmt};
+use std::fmt;
 
 use crate::dropdown::*;
 use tuble::*;
@@ -8,9 +8,9 @@ use crate::{get_possible_states, num_guesses_required};
 
 #[derive(PartialEq, Properties)]
 pub struct Props {
+    pub possible_stations: Vec<Station>,
     pub best_guess: Station,
     pub max_guesses: usize,
-    pub possible_outcomes: BTreeMap<Outcome, Vec<Station>>,
 }
 
 #[derive(Clone, Copy, PartialEq, Properties)]
@@ -28,16 +28,38 @@ impl fmt::Display for Choice {
 #[function_component]
 pub fn Component(props: &Props) -> Html {
     let Props {
+        possible_stations,
         best_guess,
         max_guesses,
-        possible_outcomes,
     } = props;
-    let selection = use_state(|| None::<Outcome>);
-    let stations: Vec<_> = possible_outcomes.values().flatten().collect();
-    if stations.len() == 1 {
-        html! { <div class="container">{format!("answer: {}", stations[0])}</div> }
-    } else {
+    if possible_stations.len() == 1 {
+        return html! { <div class="container">{format!("answer: {}", possible_stations[0])}</div> };
+    };
+    let station_state = use_state(|| None::<Station>);
+    let outcome_state = use_state(|| None::<Outcome>);
+    let station_select = {
         let dropdown_props = {
+            let station_state = station_state.clone();
+            let outcome_state = outcome_state.clone();
+            let name = "station".into();
+            let choices = possible_stations.clone();
+            let submit = Callback::from(move |choice: Option<Station>| {
+                station_state.set(choice);
+                outcome_state.set(None);
+            });
+            DropdownProps::<Station> {
+                name,
+                choices,
+                submit,
+            }
+        };
+        html! { <DropdownComponent<Station> ..dropdown_props /> }
+    };
+    let outcome_select = if let Some(station) = *station_state {
+        let possible_outcomes = get_possible_states(&station, possible_stations);
+        let dropdown_props = {
+            let outcome_state = outcome_state.clone();
+            let name = "outcome".into();
             let choices: Vec<_> = possible_outcomes
                 .iter()
                 .map(|(outcome, possible_stations)| Choice {
@@ -45,40 +67,50 @@ pub fn Component(props: &Props) -> Html {
                     possible_stations: possible_stations.len(),
                 })
                 .collect();
-            let selection = selection.clone();
             let submit = Callback::from(move |choice: Option<Choice>| {
-                selection.set(choice.map(|choice| choice.outcome))
+                outcome_state.set(choice.map(|choice| choice.outcome))
             });
-            DropdownProps::<Choice> { choices, submit }
+            DropdownProps::<Choice> {
+                name,
+                choices,
+                submit,
+            }
         };
-        let child = (*selection)
-            .as_ref()
-            .and_then(|outcome| {
-                possible_outcomes.get(&outcome).map(|possible_stations| {
-                    let (best_guess, max_guesses) = num_guesses_required(possible_stations);
-                    let possible_outcomes = get_possible_states(&best_guess, possible_stations);
-                    let props = Props {
-                        best_guess,
-                        max_guesses,
-                        possible_outcomes,
-                    };
-                    html! { <Component ..props /> }
-                })
-            })
-            .unwrap_or(html! {});
-        html! {
+        let child = if let Some(outcome) = *outcome_state {
+            if let Some(possible_stations) = possible_outcomes.get(&outcome) {
+                let (best_guess, max_guesses) = num_guesses_required(possible_stations);
+                let props = Props {
+                    possible_stations: possible_stations.clone(),
+                    best_guess,
+                    max_guesses,
+                };
+                html! {
+                    <Component ..props />
+                }
+            } else {
+                html! {}
+            }
+        } else {
+            html! {}
+        };
+        html! { <><DropdownComponent<Choice> ..dropdown_props />{child}</> }
+    } else {
+        html! {}
+    };
+    html! {
+        <div class="container">
             <div class="container">
-                <div class="container">
-                    {format!("best guess: {}", best_guess)}
-                </div>
-                <div class="container">
-                    {format!("max guesses: {}", max_guesses)}
-                </div>
-                <div class="container">
-                    <DropdownComponent<Choice> ..dropdown_props />
-                </div>
-                {child}
+                {format!("best guess: {}", best_guess)}
             </div>
-        }
+            <div class="container">
+                {format!("max guesses: {}", max_guesses)}
+            </div>
+            <div class="container">
+                {station_select}
+            </div>
+            <div class="container">
+                {outcome_select}
+            </div>
+        </div>
     }
 }
