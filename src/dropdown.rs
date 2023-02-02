@@ -4,6 +4,7 @@ use yew::prelude::*;
 
 #[derive(PartialEq, Properties)]
 pub struct DropdownProps<T: PartialEq> {
+    pub name: AttrValue,
     pub choices: Vec<T>,
     pub submit: Callback<Option<T>>,
 }
@@ -12,7 +13,11 @@ pub struct DropdownProps<T: PartialEq> {
 pub fn DropdownComponent<T: PartialEq + Display + Copy + 'static>(
     props: &DropdownProps<T>,
 ) -> Html {
-    let DropdownProps { choices, submit } = props;
+    let DropdownProps {
+        name,
+        choices,
+        submit,
+    } = props;
 
     let options = choices
         .iter()
@@ -26,7 +31,7 @@ pub fn DropdownComponent<T: PartialEq + Display + Copy + 'static>(
     html! {
         <div class="dropdown">
             <button class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" {onclick}>
-                {"select outcome"}
+                {format!("select {}", name)}
             </button>
             <ul class="dropdown-menu">
                 {options}
