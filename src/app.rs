@@ -1,5 +1,6 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, fmt};
 
+use crate::dropdown::*;
 use tuble::*;
 use yew::prelude::*;
 
@@ -10,6 +11,18 @@ pub struct Props {
     pub best_guess: Station,
     pub max_guesses: usize,
     pub possible_outcomes: BTreeMap<Outcome, Vec<Station>>,
+}
+
+#[derive(Clone, Copy, PartialEq, Properties)]
+struct Choice {
+    outcome: Outcome,
+    possible_stations: usize,
+}
+
+impl fmt::Display for Choice {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} - {}", self.outcome, self.possible_stations)
+    }
 }
 
 #[function_component]
@@ -24,30 +37,19 @@ pub fn Component(props: &Props) -> Html {
     if stations.len() == 1 {
         html! { <div class="container">{format!("answer: {}", stations[0])}</div> }
     } else {
-        let select = {
-            let options = possible_outcomes
+        let dropdown_props = {
+            let choices: Vec<_> = possible_outcomes
                 .iter()
-                .map(|(outcome, possible_stations)| {
-                    let s = selection.clone();
-                    let outcome = outcome.to_owned();
-                    let onclick = Callback::from(move |_| s.set(Some(outcome)));
-                    html! {<li><a class="dropdown-item" {onclick}>{format!("{} - {}", outcome.to_string(), possible_stations.len())}</a></li>}
+                .map(|(outcome, possible_stations)| Choice {
+                    outcome: outcome.to_owned(),
+                    possible_stations: possible_stations.len(),
                 })
-                .collect::<Html>();
-            let onclick = {
-                let s = selection.clone();
-                Callback::from(move |_| s.set(None))
-            };
-            html! {
-                <div class="dropdown">
-                    <button class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" {onclick}>
-                        {"select outcome"}
-                    </button>
-                    <ul class="dropdown-menu">
-                        {options}
-                    </ul>
-                </div>
-            }
+                .collect();
+            let selection = selection.clone();
+            let submit = Callback::from(move |choice: Option<Choice>| {
+                selection.set(choice.map(|choice| choice.outcome))
+            });
+            DropdownProps::<Choice> { choices, submit }
         };
         let child = (*selection)
             .as_ref()
@@ -73,11 +75,9 @@ pub fn Component(props: &Props) -> Html {
                     {format!("max guesses: {}", max_guesses)}
                 </div>
                 <div class="container">
-                    {select}
+                    <DropdownComponent<Choice> ..dropdown_props />
                 </div>
-                <div class="container">
-                    {child}
-                </div>
+                {child}
             </div>
         }
     }
