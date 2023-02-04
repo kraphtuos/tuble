@@ -1,7 +1,7 @@
 const STATIONS: [&str; 269] = include!("../data/stations.json");
 const DISTANCES: [[[u8; 2]; 269]; 269] = include!("../data/distances.json");
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Station {
     idx: usize,
 }

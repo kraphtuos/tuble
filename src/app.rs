@@ -8,6 +8,7 @@ use dropdown::*;
 
 #[derive(PartialEq, Properties)]
 pub struct Props {
+    pub all_stations: Vec<Station>,
     pub possible_stations: Vec<Station>,
     pub best_guess: (Station, usize),
 }
@@ -27,6 +28,7 @@ impl fmt::Display for Choice {
 #[function_component]
 pub fn App(props: &Props) -> Html {
     let Props {
+        all_stations,
         possible_stations,
         best_guess,
     } = props;
@@ -40,7 +42,7 @@ pub fn App(props: &Props) -> Html {
             let station_state = station_state.clone();
             let outcome_state = outcome_state.clone();
             let name = "station".into();
-            let choices = possible_stations.clone();
+            let choices = all_stations.clone();
             let submit = Callback::from(move |choice: Option<Station>| {
                 station_state.set(choice);
                 outcome_state.set(None);
@@ -74,37 +76,32 @@ pub fn App(props: &Props) -> Html {
                 submit,
             }
         };
+        let button = html! { <DropdownComponent<Choice> ..dropdown_props /> };
         let child = if let Some(outcome) = *outcome_state {
             if let Some(possible_stations) = possible_outcomes.get(&outcome) {
-                let best_guess = num_guesses_required(possible_stations);
+                let best_guess = num_guesses_required(all_stations, possible_stations);
+                let all_stations = all_stations.clone();
                 let props = Props {
+                    all_stations,
                     possible_stations: possible_stations.clone(),
                     best_guess,
                 };
-                html! {
-                    <App ..props />
-                }
+                html! { <>{outcome}<App ..props /></> }
             } else {
                 html! {}
             }
         } else {
             html! {}
         };
-        html! { <><DropdownComponent<Choice> ..dropdown_props />{child}</> }
+        html! { <>{station}{button}{child}</> }
     } else {
         html! {}
     };
     html! {
         <div class="container">
-            <div class="container">
-                {format!("best guess: {} - {}", best_guess.0, best_guess.1)}
-            </div>
-            <div class="container">
-                {station_select}
-            </div>
-            <div class="container">
-                {outcome_select}
-            </div>
+            {format!("best guess: {} - {}", best_guess.0, best_guess.1)}
+            {station_select}
+            {outcome_select}
         </div>
     }
 }
