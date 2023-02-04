@@ -20,25 +20,48 @@ pub fn get_possible_states(
     map
 }
 
-pub fn num_guesses_required(possible_stations: &[Station]) -> (Station, usize) {
+fn num_guesses_required_helper(
+    all_stations: &[Station],
+    possible_stations: &[Station],
+    depth: usize,
+    mem: &mut std::collections::HashMap<Vec<Station>, (Station, usize)>,
+) -> (Station, usize) {
+    if depth > 5 {
+        return (possible_stations[0], 5);
+    }
+    if let Some(value) = mem.get(possible_stations) {
+        return *value;
+    }
     if possible_stations.len() == 1 {
         return (possible_stations[0], 1);
     }
-    possible_stations
+    let res = all_stations
         .iter()
-        .map(|station| {
-            get_possible_states(station, possible_stations)
+        .filter_map(|station| {
+            let possible_states = get_possible_states(station, possible_stations);
+            if possible_states.len() == 1 {
+                return None;
+            };
+            possible_states
                 .iter()
-                .map(|x| {
-                    if x.1.len() == possible_stations.len() {
-                        return usize::MAX - 1;
-                    }
-                    num_guesses_required(x.1).1
-                })
+                .map(|x| num_guesses_required_helper(all_stations, x.1, depth + 1, mem).1)
                 .max()
                 .map(|x| (*station, x + 1))
-                .unwrap()
         })
         .min_by_key(|x| x.1)
-        .unwrap()
+        .unwrap();
+    mem.insert(possible_stations.to_owned(), res);
+    res
+}
+
+pub fn num_guesses_required(
+    all_stations: &[Station],
+    possible_stations: &[Station],
+) -> (Station, usize) {
+    num_guesses_required_helper(
+        all_stations,
+        possible_stations,
+        0,
+        &mut std::collections::HashMap::new(),
+    )
 }
