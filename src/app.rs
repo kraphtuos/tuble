@@ -79,6 +79,10 @@ pub fn App(props: &Props) -> Html {
         let button = html! { <DropdownComponent<Choice> ..dropdown_props /> };
         let child = if let Some(outcome) = *outcome_state {
             if let Some(possible_stations) = possible_outcomes.get(&outcome) {
+                let choice = Choice {
+                    outcome,
+                    possible_stations: possible_stations.len(),
+                };
                 let best_guess = num_guesses_required(all_stations, possible_stations);
                 let all_stations = all_stations.clone();
                 let props = Props {
@@ -86,7 +90,7 @@ pub fn App(props: &Props) -> Html {
                     possible_stations: possible_stations.clone(),
                     best_guess,
                 };
-                html! { <>{outcome}<App ..props /></> }
+                html! { <>{choice}<App ..props /></> }
             } else {
                 html! {}
             }
