@@ -1,5 +1,4 @@
 use std::fmt::Display;
-
 use yew::prelude::*;
 
 #[derive(PartialEq, Properties)]

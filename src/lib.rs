@@ -1,66 +1,44 @@
-const STATIONS: [&str; 269] = include!("../data/stations.json");
-const DISTANCES: [[[u8; 2]; 269]; 269] = include!("../data/distances.json");
+pub mod data;
 
-#[derive(Copy, Clone, PartialEq)]
-pub struct Station {
-    idx: usize,
+#[cfg(target_arch = "wasm32")]
+pub mod app;
+
+pub use self::data::*;
+
+use std::collections::BTreeMap;
+
+pub fn get_possible_states(
+    target_station: &Station,
+    possible_stations: &[Station],
+) -> BTreeMap<Outcome, Vec<Station>> {
+    let mut map: BTreeMap<Outcome, Vec<Station>> = BTreeMap::new();
+    for &station in possible_stations {
+        map.entry(target_station.get_outcome(&station))
+            .or_default()
+            .push(station);
+    }
+    map
 }
 
-impl std::fmt::Display for Station {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", STATIONS[self.idx])
+pub fn num_guesses_required(possible_stations: &[Station]) -> (Station, usize) {
+    if possible_stations.len() == 1 {
+        return (possible_stations[0], 1);
     }
-}
-
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub enum ZoneOutcome {
-    Correct,
-    OneAway,
-    TwoAway,
-    MoreThanTwo,
-}
-
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Outcome {
-    pub stops: u8,
-    pub zones: ZoneOutcome,
-}
-
-impl std::fmt::Display for Outcome {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        let Self { stops, zones } = self;
-        let zones = match zones {
-            ZoneOutcome::Correct => "0",
-            ZoneOutcome::OneAway => "1",
-            ZoneOutcome::TwoAway => "2",
-            ZoneOutcome::MoreThanTwo => ">2",
-        };
-        write!(f, "{} stops, {} zones", stops, zones)
-    }
-}
-
-impl Station {
-    pub fn from(idx: usize) -> Self {
-        if idx >= STATIONS.len() {
-            panic!("Cannot handle station idx: {}", idx);
-        }
-        Self { idx }
-    }
-
-    pub fn get_outcome(self: &Self, other: &Self) -> Outcome {
-        let distance = DISTANCES[self.idx][other.idx];
-        let stops = distance[0];
-        let zones = match distance[1] {
-            0 => ZoneOutcome::Correct,
-            1 => ZoneOutcome::OneAway,
-            2 => ZoneOutcome::TwoAway,
-            _ => ZoneOutcome::MoreThanTwo,
-        };
-
-        Outcome { stops, zones }
-    }
-
-    pub fn all_stations() -> Vec<Self> {
-        (0..STATIONS.len()).map(Station::from).collect()
-    }
+    possible_stations
+        .iter()
+        .map(|station| {
+            get_possible_states(station, possible_stations)
+                .iter()
+                .map(|x| {
+                    if x.1.len() == possible_stations.len() {
+                        return usize::MAX - 1;
+                    }
+                    num_guesses_required(x.1).1
+                })
+                .max()
+                .map(|x| (*station, x + 1))
+                .unwrap()
+        })
+        .min_by_key(|x| x.1)
+        .unwrap()
 }
