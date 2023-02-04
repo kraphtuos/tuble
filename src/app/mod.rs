@@ -1,16 +1,15 @@
-use std::fmt;
+mod dropdown;
 
-use crate::dropdown::*;
-use tuble::*;
+use std::fmt;
 use yew::prelude::*;
 
-use crate::{get_possible_states, num_guesses_required};
+use crate::*;
+use dropdown::*;
 
 #[derive(PartialEq, Properties)]
 pub struct Props {
     pub possible_stations: Vec<Station>,
-    pub best_guess: Station,
-    pub max_guesses: usize,
+    pub best_guess: (Station, usize),
 }
 
 #[derive(Clone, Copy, PartialEq, Properties)]
@@ -26,11 +25,10 @@ impl fmt::Display for Choice {
 }
 
 #[function_component]
-pub fn Component(props: &Props) -> Html {
+pub fn App(props: &Props) -> Html {
     let Props {
         possible_stations,
         best_guess,
-        max_guesses,
     } = props;
     if possible_stations.len() == 1 {
         return html! { <div class="container">{format!("answer: {}", possible_stations[0])}</div> };
@@ -78,14 +76,13 @@ pub fn Component(props: &Props) -> Html {
         };
         let child = if let Some(outcome) = *outcome_state {
             if let Some(possible_stations) = possible_outcomes.get(&outcome) {
-                let (best_guess, max_guesses) = num_guesses_required(possible_stations);
+                let best_guess = num_guesses_required(possible_stations);
                 let props = Props {
                     possible_stations: possible_stations.clone(),
                     best_guess,
-                    max_guesses,
                 };
                 html! {
-                    <Component ..props />
+                    <App ..props />
                 }
             } else {
                 html! {}
@@ -100,10 +97,7 @@ pub fn Component(props: &Props) -> Html {
     html! {
         <div class="container">
             <div class="container">
-                {format!("best guess: {}", best_guess)}
-            </div>
-            <div class="container">
-                {format!("max guesses: {}", max_guesses)}
+                {format!("best guess: {} - {}", best_guess.0, best_guess.1)}
             </div>
             <div class="container">
                 {station_select}
