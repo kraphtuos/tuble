@@ -25,14 +25,18 @@ fn num_guesses_required_helper(
     possible_stations: &[Station],
     cache: &mut HashMap<Vec<Station>, (Station, usize)>,
 ) -> (Station, usize) {
-    if let Some(res) = cache.get(possible_stations) {
-        return *res;
-    }
     if possible_stations.len() == 1 {
         return (possible_stations[0], 1);
     }
+    if possible_stations.len() == 2 {
+        return (possible_stations[0], 2);
+    }
+    if let Some(res) = cache.get(possible_stations) {
+        return *res;
+    }
     let mut min_max_guess = usize::MAX;
     let mut best_guess = None;
+    let mut possible_station_picked = false;
     'outer: for station in all_stations {
         let possible_states = get_possible_states(station, possible_stations);
         if possible_states.len() == 1 {
@@ -42,7 +46,9 @@ fn num_guesses_required_helper(
         for (_outcome, possible_stations) in possible_states {
             let num_guesses =
                 num_guesses_required_helper(all_stations, &possible_stations, cache).1 + 1;
-            if num_guesses > min_max_guess {
+            if (num_guesses > min_max_guess)
+                || (num_guesses == min_max_guess && possible_station_picked)
+            {
                 continue 'outer;
             }
             max_guess = max_guess.max(num_guesses);
@@ -50,6 +56,17 @@ fn num_guesses_required_helper(
 
         if max_guess < min_max_guess {
             min_max_guess = max_guess;
+            best_guess = Some(*station);
+            if possible_stations.contains(station) {
+                possible_station_picked = true;
+            } else {
+                possible_station_picked = false;
+            }
+        } else if (max_guess == min_max_guess)
+            && !possible_station_picked
+            && possible_stations.contains(station)
+        {
+            possible_station_picked = true;
             best_guess = Some(*station);
         }
     }
