@@ -1,10 +1,10 @@
-mod dropdown;
+mod select;
 
 use std::fmt;
 use yew::prelude::*;
 
 use crate::*;
-use dropdown::*;
+use select::*;
 
 #[derive(PartialEq, Properties)]
 pub struct Props {
@@ -33,56 +33,61 @@ pub fn App(props: &Props) -> Html {
         best_guess,
     } = props;
     if possible_stations.len() == 1 {
-        return html! { <div class="container">{format!("answer: {}", possible_stations[0])}</div> };
+        return html! { <div class="container"><p>{format!("answer: {}", possible_stations[0])}</p></div> };
     };
     let station_state = use_state(|| None::<Station>);
-    let outcome_state = use_state(|| None::<Outcome>);
-    let station_select = {
-        let dropdown_props = {
+    let choice_state = use_state(|| None::<Choice>);
+    let mut columns = vec![
+        html! { <label class="col-form-label">{format!("best guess: {} - {}", best_guess.0, best_guess.1)}</label> },
+    ];
+    let mut child = html! {};
+    {
+        let select_props = {
             let station_state = station_state.clone();
-            let outcome_state = outcome_state.clone();
+            let choice_state = choice_state.clone();
             let name = "station".into();
             let choices = all_stations.clone();
+            let selected = *station_state;
             let submit = Callback::from(move |choice: Option<Station>| {
                 station_state.set(choice);
-                outcome_state.set(None);
+                choice_state.set(None);
             });
-            DropdownProps::<Station> {
+            SelectProps::<Station> {
                 name,
                 choices,
+                selected,
                 submit,
             }
         };
-        html! { <DropdownComponent<Station> ..dropdown_props /> }
-    };
-    let outcome_select = if let Some(station) = *station_state {
+        columns.push(html! { <SelectComponent<Station> ..select_props /> });
+    }
+    if let Some(station) = *station_state {
         let possible_outcomes = get_possible_states(&station, possible_stations);
-        let dropdown_props = {
-            let outcome_state = outcome_state.clone();
-            let name = "outcome".into();
-            let choices: Vec<_> = possible_outcomes
-                .iter()
-                .map(|(outcome, possible_stations)| Choice {
-                    outcome: outcome.to_owned(),
-                    possible_stations: possible_stations.len(),
-                })
-                .collect();
-            let submit = Callback::from(move |choice: Option<Choice>| {
-                outcome_state.set(choice.map(|choice| choice.outcome))
-            });
-            DropdownProps::<Choice> {
-                name,
-                choices,
-                submit,
-            }
-        };
-        let button = html! { <DropdownComponent<Choice> ..dropdown_props /> };
-        let child = if let Some(outcome) = *outcome_state {
+        {
+            let select_props = {
+                let choice_state = choice_state.clone();
+                let name = "outcome".into();
+                let choices: Vec<_> = possible_outcomes
+                    .iter()
+                    .map(|(outcome, possible_stations)| Choice {
+                        outcome: outcome.to_owned(),
+                        possible_stations: possible_stations.len(),
+                    })
+                    .collect();
+                let selected = *choice_state;
+                let submit = Callback::from(move |choice: Option<Choice>| choice_state.set(choice));
+                SelectProps::<Choice> {
+                    name,
+                    choices,
+                    selected,
+                    submit,
+                }
+            };
+            columns.push(html! { <SelectComponent<Choice> ..select_props /> });
+        }
+        if let Some(choice) = *choice_state {
+            let outcome = choice.outcome;
             if let Some(possible_stations) = possible_outcomes.get(&outcome) {
-                let choice = Choice {
-                    outcome,
-                    possible_stations: possible_stations.len(),
-                };
                 let best_guess = num_guesses_required(all_stations, possible_stations);
                 let all_stations = all_stations.clone();
                 let props = Props {
@@ -90,22 +95,16 @@ pub fn App(props: &Props) -> Html {
                     possible_stations: possible_stations.clone(),
                     best_guess,
                 };
-                html! { <>{choice}<App ..props /></> }
-            } else {
-                html! {}
+                child = html! { <App ..props /> };
             }
-        } else {
-            html! {}
-        };
-        html! { <>{station}{button}{child}</> }
-    } else {
-        html! {}
-    };
+        }
+    }
     html! {
         <div class="container">
-            {format!("best guess: {} - {}", best_guess.0, best_guess.1)}
-            {station_select}
-            {outcome_select}
+            <div class="row mb-3">
+                { for columns.into_iter().map(|col| html! { <div class="col-auto">{col}</div> }) }
+            </div>
+            {child}
         </div>
     }
 }
