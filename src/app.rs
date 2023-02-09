@@ -78,7 +78,10 @@ pub fn App(props: &Props) -> Html {
                     })
                     .collect();
                 let selected = *choice_state;
-                let submit = Callback::from(move |choice: Option<Choice>| choice_state.set(choice));
+                let submit = Callback::from(move |choice: Option<Choice>| {
+                    // CR: The child component should be re-rendered here.
+                    choice_state.set(choice);
+                });
                 SelectProps::<Choice> {
                     name,
                     placeholder,
