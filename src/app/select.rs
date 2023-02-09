@@ -5,6 +5,7 @@ use yew::prelude::*;
 #[derive(PartialEq, Properties)]
 pub struct SelectProps<T: PartialEq> {
     pub name: AttrValue,
+    pub placeholder: AttrValue,
     pub choices: Vec<T>,
     pub selected: Option<T>,
     pub submit: Callback<Option<T>>,
@@ -14,6 +15,7 @@ pub struct SelectProps<T: PartialEq> {
 pub fn SelectComponent<T: PartialEq + Display + Copy + 'static>(props: &SelectProps<T>) -> Html {
     let SelectProps {
         name,
+        placeholder,
         choices,
         selected,
         submit,
@@ -39,7 +41,7 @@ pub fn SelectComponent<T: PartialEq + Display + Copy + 'static>(props: &SelectPr
     };
     html! {
         <select class="form-select" aria-label={format!("select {}", name)} {onchange} ref={select_ref}>
-            <option disabled=true selected={selected.is_none()}>{"-"}</option>
+            <option disabled=true selected={selected.is_none()}>{placeholder}</option>
             {for options}
         </select>
     }

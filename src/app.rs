@@ -46,6 +46,7 @@ pub fn App(props: &Props) -> Html {
             let station_state = station_state.clone();
             let choice_state = choice_state.clone();
             let name = "station".into();
+            let placeholder = "select station".into();
             let choices = all_stations.clone();
             let selected = *station_state;
             let submit = Callback::from(move |choice: Option<Station>| {
@@ -54,6 +55,7 @@ pub fn App(props: &Props) -> Html {
             });
             SelectProps::<Station> {
                 name,
+                placeholder,
                 choices,
                 selected,
                 submit,
@@ -67,6 +69,7 @@ pub fn App(props: &Props) -> Html {
             let select_props = {
                 let choice_state = choice_state.clone();
                 let name = "outcome".into();
+                let placeholder = "select outcome".into();
                 let choices: Vec<_> = possible_outcomes
                     .iter()
                     .map(|(outcome, possible_stations)| Choice {
@@ -78,6 +81,7 @@ pub fn App(props: &Props) -> Html {
                 let submit = Callback::from(move |choice: Option<Choice>| choice_state.set(choice));
                 SelectProps::<Choice> {
                     name,
+                    placeholder,
                     choices,
                     selected,
                     submit,
