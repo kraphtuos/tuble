@@ -3,7 +3,7 @@ use tuble::*;
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
     let all_stations = Station::all_stations();
-    let (best_guess, max_guesses) = num_guesses_required(&all_stations, &all_stations);
+    let (best_guess, max_guesses) = minimax::optimise(&all_stations, &all_stations);
     print!("{}, {}", best_guess, max_guesses);
 }
 
@@ -14,7 +14,7 @@ use app::*;
 fn main() {
     let all_stations = Station::all_stations();
     let possible_stations = all_stations.clone();
-    let best_guess = num_guesses_required(&all_stations, &possible_stations);
+    let best_guess = minimax::optimise(&all_stations, &possible_stations);
     yew::Renderer::<App>::with_props(Props {
         all_stations,
         possible_stations,
