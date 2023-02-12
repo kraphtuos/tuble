@@ -1,3 +1,5 @@
+//! Optimise for worse case by searching recursively
+
 use super::*;
 
 fn helper(
@@ -36,11 +38,7 @@ fn helper(
         if max_guess < min_max_guess {
             min_max_guess = max_guess;
             best_guess = Some(*station);
-            if possible_stations.contains(station) {
-                possible_station_picked = true;
-            } else {
-                possible_station_picked = false;
-            }
+            possible_station_picked = possible_stations.contains(station);
         } else if (max_guess == min_max_guess)
             && !possible_station_picked
             && possible_stations.contains(station)

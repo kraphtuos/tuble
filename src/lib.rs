@@ -1,5 +1,5 @@
 pub mod data;
-pub use self::data::*;
+pub use data::*;
 
 pub mod optimisers;
 pub use optimisers::*;
