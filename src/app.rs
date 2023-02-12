@@ -10,7 +10,8 @@ use select::*;
 pub struct Props {
     pub all_stations: Vec<Station>,
     pub possible_stations: Vec<Station>,
-    pub best_guess: (Station, usize),
+    pub best_guess_minimax: (Station, usize),
+    pub best_guess_size: (Station, usize),
 }
 
 #[derive(Clone, Copy, PartialEq, Properties)]
@@ -30,7 +31,8 @@ pub fn App(props: &Props) -> Html {
     let Props {
         all_stations,
         possible_stations,
-        best_guess,
+        best_guess_minimax,
+        best_guess_size,
     } = props;
     if possible_stations.len() == 1 {
         return html! { <div class="container"><p>{format!("answer: {}", possible_stations[0])}</p></div> };
@@ -38,7 +40,8 @@ pub fn App(props: &Props) -> Html {
     let station_state = use_state(|| None::<Station>);
     let choice_state = use_state(|| None::<Choice>);
     let mut columns = vec![
-        html! { <label class="col-form-label">{format!("best guess: {} - {}", best_guess.0, best_guess.1)}</label> },
+        html! { <label class="col-form-label">{format!("minimax best guess: {} - {}", best_guess_minimax.0, best_guess_minimax.1)}</label> },
+        html! { <label class="col-form-label">{format!("size best guess: {} - {}", best_guess_size.0, best_guess_size.1)}</label> },
     ];
     let mut child = html! {};
     {
@@ -65,6 +68,31 @@ pub fn App(props: &Props) -> Html {
     }
     if let Some(station) = *station_state {
         let possible_outcomes = get_possible_states(&station, possible_stations);
+        {
+            let worst_guess_minimax = possible_outcomes
+                .iter()
+                .map(|(outcome, possible_stations)| {
+                    (
+                        outcome,
+                        minimax::optimise(all_stations, possible_stations).1,
+                    )
+                })
+                .max_by_key(|x| x.1)
+                .unwrap();
+            let worst_guess_size = possible_outcomes
+                .iter()
+                .map(|(outcome, possible_stations)| {
+                    (outcome, size::optimise(all_stations, possible_stations).1)
+                })
+                .max_by_key(|x| x.1)
+                .unwrap();
+            columns.push(
+                html! { <label class="col-form-label">{format!("minimax worst guess: {} - {}", worst_guess_minimax.0, worst_guess_minimax.1)}</label> },
+            );
+            columns.push(
+                html! { <label class="col-form-label">{format!("size worst guess: {} - {}", worst_guess_size.0, worst_guess_size.1)}</label> }
+            );
+        };
         {
             let select_props = {
                 let choice_state = choice_state.clone();
@@ -95,12 +123,14 @@ pub fn App(props: &Props) -> Html {
         if let Some(choice) = *choice_state {
             let outcome = choice.outcome;
             if let Some(possible_stations) = possible_outcomes.get(&outcome) {
-                let best_guess = minimax::optimise(all_stations, possible_stations);
+                let best_guess_minimax = minimax::optimise(all_stations, possible_stations);
+                let best_guess_size = size::optimise(all_stations, possible_stations);
                 let all_stations = all_stations.clone();
                 let props = Props {
                     all_stations,
                     possible_stations: possible_stations.clone(),
-                    best_guess,
+                    best_guess_minimax,
+                    best_guess_size,
                 };
                 child = html! { <App ..props /> };
             }

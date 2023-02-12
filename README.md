@@ -27,3 +27,4 @@ rustup target add x86_64-unknown-linux-gnu
 
 - Add max entropy reducing optimiser for minimal expected number of guesses
 - Improve command line UI
+- Add cross evaluation of different optimisers

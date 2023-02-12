@@ -15,3 +15,4 @@ pub fn get_possible_states(
 }
 
 pub mod minimax;
+pub mod size;
