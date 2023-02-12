@@ -95,7 +95,7 @@ pub fn App(props: &Props) -> Html {
         if let Some(choice) = *choice_state {
             let outcome = choice.outcome;
             if let Some(possible_stations) = possible_outcomes.get(&outcome) {
-                let best_guess = num_guesses_required(all_stations, possible_stations);
+                let best_guess = minimax::optimise(all_stations, possible_stations);
                 let all_stations = all_stations.clone();
                 let props = Props {
                     all_stations,
