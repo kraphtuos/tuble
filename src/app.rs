@@ -10,9 +10,6 @@ use select::*;
 pub struct Props {
     pub all_stations: Vec<Station>,
     pub possible_stations: Vec<Station>,
-    pub best_guess_minimax: (Station, usize),
-    pub best_guess_size: (Station, usize),
-    pub best_guess_entropy: (Station, f64),
 }
 
 #[derive(Clone, Copy, PartialEq, Properties)]
@@ -32,13 +29,13 @@ pub fn App(props: &Props) -> Html {
     let Props {
         all_stations,
         possible_stations,
-        best_guess_minimax,
-        best_guess_size,
-        best_guess_entropy,
     } = props;
     if possible_stations.len() == 1 {
         return html! { <div class="container"><p>{format!("answer: {}", possible_stations[0])}</p></div> };
     };
+    let best_guess_minimax = minimax::optimise(&all_stations, &possible_stations);
+    let best_guess_size = size::optimise(&all_stations, &possible_stations);
+    let best_guess_entropy = entropy::optimise(&all_stations, &possible_stations);
     let station_state = use_state(|| None::<Station>);
     let choice_state = use_state(|| None::<Choice>);
     let mut columns = vec![
@@ -139,16 +136,9 @@ pub fn App(props: &Props) -> Html {
         if let Some(choice) = *choice_state {
             let outcome = choice.outcome;
             if let Some(possible_stations) = possible_outcomes.get(&outcome) {
-                let best_guess_minimax = minimax::optimise(all_stations, possible_stations);
-                let best_guess_size = size::optimise(all_stations, possible_stations);
-                let best_guess_entropy = entropy::optimise(all_stations, possible_stations);
-                let all_stations = all_stations.clone();
                 let props = Props {
-                    all_stations,
+                    all_stations: all_stations.clone(),
                     possible_stations: possible_stations.clone(),
-                    best_guess_minimax,
-                    best_guess_size,
-                    best_guess_entropy,
                 };
                 child = html! { <App ..props /> };
             }
