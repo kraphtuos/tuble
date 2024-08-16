@@ -17,15 +17,9 @@ fn main() {
 
     let all_stations = Station::all_stations();
     let possible_stations = all_stations.clone();
-    let best_guess_minimax = minimax::optimise(&all_stations, &possible_stations);
-    let best_guess_size = size::optimise(&all_stations, &possible_stations);
-    let best_guess_entropy = entropy::optimise(&all_stations, &possible_stations);
     yew::Renderer::<App>::with_props(Props {
         all_stations,
         possible_stations,
-        best_guess_minimax,
-        best_guess_size,
-        best_guess_entropy,
     })
     .render();
 }
