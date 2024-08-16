@@ -14,5 +14,6 @@ pub fn get_possible_states(
     map
 }
 
+pub mod entropy;
 pub mod minimax;
 pub mod size;
