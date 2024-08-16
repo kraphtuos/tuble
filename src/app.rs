@@ -12,6 +12,7 @@ pub struct Props {
     pub possible_stations: Vec<Station>,
     pub best_guess_minimax: (Station, usize),
     pub best_guess_size: (Station, usize),
+    pub best_guess_entropy: (Station, f64),
 }
 
 #[derive(Clone, Copy, PartialEq, Properties)]
@@ -33,6 +34,7 @@ pub fn App(props: &Props) -> Html {
         possible_stations,
         best_guess_minimax,
         best_guess_size,
+        best_guess_entropy,
     } = props;
     if possible_stations.len() == 1 {
         return html! { <div class="container"><p>{format!("answer: {}", possible_stations[0])}</p></div> };
@@ -42,6 +44,7 @@ pub fn App(props: &Props) -> Html {
     let mut columns = vec![
         html! { <label class="col-form-label">{format!("minimax best guess: {} - {}", best_guess_minimax.0, best_guess_minimax.1)}</label> },
         html! { <label class="col-form-label">{format!("size best guess: {} - {}", best_guess_size.0, best_guess_size.1)}</label> },
+        html! { <label class="col-form-label">{format!("entropy best guess: {} - {}", best_guess_entropy.0, best_guess_entropy.1)}</label> },
     ];
     let mut child = html! {};
     {
@@ -86,11 +89,24 @@ pub fn App(props: &Props) -> Html {
                 })
                 .max_by_key(|x| x.1)
                 .unwrap();
+            let worst_guess_entropy = possible_outcomes
+                .iter()
+                .map(|(outcome, possible_stations)| {
+                    (
+                        outcome,
+                        entropy::optimise(all_stations, possible_stations).1,
+                    )
+                })
+                .max_by(|x, y| x.1.partial_cmp(&y.1).unwrap())
+                .unwrap();
             columns.push(
                 html! { <label class="col-form-label">{format!("minimax worst guess: {} - {}", worst_guess_minimax.0, worst_guess_minimax.1)}</label> },
             );
             columns.push(
                 html! { <label class="col-form-label">{format!("size worst guess: {} - {}", worst_guess_size.0, worst_guess_size.1)}</label> }
+            );
+            columns.push(
+                html! { <label class="col-form-label">{format!("entropy worst guess: {} - {}", worst_guess_entropy.0, worst_guess_entropy.1)}</label> }
             );
         };
         {
@@ -125,12 +141,14 @@ pub fn App(props: &Props) -> Html {
             if let Some(possible_stations) = possible_outcomes.get(&outcome) {
                 let best_guess_minimax = minimax::optimise(all_stations, possible_stations);
                 let best_guess_size = size::optimise(all_stations, possible_stations);
+                let best_guess_entropy = entropy::optimise(all_stations, possible_stations);
                 let all_stations = all_stations.clone();
                 let props = Props {
                     all_stations,
                     possible_stations: possible_stations.clone(),
                     best_guess_minimax,
                     best_guess_size,
+                    best_guess_entropy,
                 };
                 child = html! { <App ..props /> };
             }
