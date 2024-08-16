@@ -72,7 +72,7 @@ pub fn App(props: &Props) -> Html {
     if let Some(station) = *station_state {
         let possible_outcomes = get_possible_states(&station, possible_stations);
         {
-            let worst_guess_minimax = possible_outcomes
+            let worse_case_minimax = possible_outcomes
                 .iter()
                 .map(|(outcome, possible_stations)| {
                     (
@@ -82,14 +82,14 @@ pub fn App(props: &Props) -> Html {
                 })
                 .max_by_key(|x| x.1)
                 .unwrap();
-            let worst_guess_size = possible_outcomes
+            let worse_case_size = possible_outcomes
                 .iter()
                 .map(|(outcome, possible_stations)| {
                     (outcome, size::optimise(all_stations, possible_stations).1)
                 })
                 .max_by_key(|x| x.1)
                 .unwrap();
-            let worst_guess_entropy = possible_outcomes
+            let worse_case_entropy = possible_outcomes
                 .iter()
                 .map(|(outcome, possible_stations)| {
                     (
@@ -100,13 +100,13 @@ pub fn App(props: &Props) -> Html {
                 .max_by(|x, y| x.1.partial_cmp(&y.1).unwrap())
                 .unwrap();
             columns.push(
-                html! { <label class="col-form-label">{format!("minimax worst guess: {} - {}", worst_guess_minimax.0, worst_guess_minimax.1)}</label> },
+                html! { <label class="col-form-label">{format!("minimax worse case: {} - {}", worse_case_minimax.0, worse_case_minimax.1)}</label> },
             );
             columns.push(
-                html! { <label class="col-form-label">{format!("size worst guess: {} - {}", worst_guess_size.0, worst_guess_size.1)}</label> }
+                html! { <label class="col-form-label">{format!("size worse case: {} - {}", worse_case_size.0, worse_case_size.1)}</label> }
             );
             columns.push(
-                html! { <label class="col-form-label">{format!("entropy worst guess: {} - {}", worst_guess_entropy.0, worst_guess_entropy.1)}</label> }
+                html! { <label class="col-form-label">{format!("entropy worse case: {} - {}", worse_case_entropy.0, worse_case_entropy.1)}</label> }
             );
         };
         {
