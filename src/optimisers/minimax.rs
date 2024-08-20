@@ -2,6 +2,31 @@
 
 use super::*;
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+struct Steps(usize);
+
+impl std::fmt::Display for Steps {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl PartialOrd for Steps {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Steps {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        other.0.cmp(&self.0)
+    }
+}
+
+impl Score for Steps {}
+
+pub struct MinimaxOptimiser;
+
 fn helper(
     all_stations: &[Station],
     possible_stations: &[Station],
@@ -52,6 +77,14 @@ fn helper(
     res
 }
 
-pub fn optimise(all_stations: &[Station], possible_stations: &[Station]) -> (Station, usize) {
-    helper(all_stations, possible_stations, &mut HashMap::new())
+impl Optimiser for MinimaxOptimiser {
+    const NAME: &'static str = "minimax";
+
+    fn optimise(all_stations: &[Station], possible_stations: &[Station]) -> Output<impl Score> {
+        let (station, steps) = helper(all_stations, possible_stations, &mut HashMap::new());
+        Output {
+            station,
+            score: Steps(steps),
+        }
+    }
 }

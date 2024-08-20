@@ -3,12 +3,15 @@ use tuble::*;
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
     let all_stations = Station::all_stations();
-    let (best_guess, max_guesses) = minimax::optimise(&all_stations, &all_stations);
-    println!("minimax: {}, {}", best_guess, max_guesses);
-    let (best_guess, max_size) = size::optimise(&all_stations, &all_stations);
-    println!("max size: {}, {}", best_guess, max_size);
-    let (best_guess, min_entropy) = entropy::optimise(&all_stations, &all_stations);
-    println!("min entropy: {}, {}", best_guess, min_entropy);
+    fn print<O: Optimiser>(all_stations: &[Station]) {
+        println!(
+            "{}",
+            optimise_and_output::<O>(all_stations, all_stations, "")
+        )
+    }
+    print::<MinimaxOptimiser>(&all_stations);
+    print::<SizeOptimiser>(&all_stations);
+    print::<EntropyOptimiser>(&all_stations);
 }
 
 #[cfg(target_arch = "wasm32")]
