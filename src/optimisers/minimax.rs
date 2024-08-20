@@ -19,11 +19,11 @@ impl PartialOrd for Steps {
 
 impl Ord for Steps {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        other.0.cmp(&self.0)
+        self.0.cmp(&other.0)
     }
 }
 
-impl Score for Steps {}
+impl Cost for Steps {}
 
 pub struct MinimaxOptimiser;
 
@@ -80,11 +80,11 @@ fn helper(
 impl Optimiser for MinimaxOptimiser {
     const NAME: &'static str = "minimax";
 
-    fn optimise(all_stations: &[Station], possible_stations: &[Station]) -> Output<impl Score> {
+    fn optimise(all_stations: &[Station], possible_stations: &[Station]) -> Output<impl Cost> {
         let (station, steps) = helper(all_stations, possible_stations, &mut HashMap::new());
         Output {
             station,
-            score: Steps(steps),
+            cost: Steps(steps),
         }
     }
 }

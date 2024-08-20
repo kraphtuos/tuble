@@ -3,16 +3,18 @@ use web_sys::HtmlSelectElement;
 use yew::prelude::*;
 
 #[derive(PartialEq, Properties)]
-pub struct SelectProps<T: PartialEq> {
+pub struct SelectProps<K: PartialEq, T: PartialEq> {
     pub name: AttrValue,
     pub placeholder: AttrValue,
-    pub choices: Vec<T>,
-    pub selected: Option<T>,
-    pub submit: Callback<Option<T>>,
+    pub choices: Vec<(K, T)>,
+    pub selected: Option<K>,
+    pub submit: Callback<Option<K>>,
 }
 
 #[function_component]
-pub fn SelectComponent<T: PartialEq + Display + Copy + 'static>(props: &SelectProps<T>) -> Html {
+pub fn SelectComponent<K: PartialEq + Copy + 'static, T: PartialEq + Display + Copy + 'static>(
+    props: &SelectProps<K, T>,
+) -> Html {
     let SelectProps {
         name,
         placeholder,
@@ -24,9 +26,9 @@ pub fn SelectComponent<T: PartialEq + Display + Copy + 'static>(props: &SelectPr
     let select_ref = use_node_ref();
 
     let options = {
-        choices.iter().map(move |choice| {
-            let selected = selected.as_ref() == Some(choice);
-            html! {<option {selected}>{format!("{}", choice)}</option>}
+        choices.iter().map(move |(key, value)| {
+            let selected = selected.as_ref() == Some(key);
+            html! {<option {selected}>{format!("{}", value)}</option>}
         })
     };
     let onchange = {
@@ -36,7 +38,7 @@ pub fn SelectComponent<T: PartialEq + Display + Copy + 'static>(props: &SelectPr
             select_ref
                 .cast::<HtmlSelectElement>()
                 .and_then(|select| choices.get(select.selected_index() as usize - 1))
-                .copied()
+                .map(|x| x.0)
         })
     };
     html! {
