@@ -34,8 +34,8 @@ pub fn App(props: &Props) -> Html {
         return html! { <div class="container"><p>{format!("answer: {}", possible_stations[0])}</p></div> };
     };
     let mut child = html! {};
-    let station_state = use_state(|| None::<Station>);
-    let outcome_state = use_state(|| None::<Outcome>);
+    let station_state = use_state_eq(|| None::<Station>);
+    let outcome_state = use_state_eq(|| None::<Outcome>);
     let mut rows = vec![];
     {
         // Best guess row
@@ -45,10 +45,15 @@ pub fn App(props: &Props) -> Html {
             all_stations: &[Station],
             possible_stations: &[Station],
             station_state: &UseStateHandle<Option<Station>>,
+            outcome_state: &UseStateHandle<Option<Outcome>>,
         ) {
             let Output { station, cost } = O::optimise(&all_stations, &possible_stations);
             let station_state = station_state.clone();
-            let onclick = Callback::from(move |_| station_state.set(Some(station)));
+            let outcome_state = outcome_state.clone();
+            let onclick = Callback::from(move |_| {
+                station_state.set(Some(station));
+                outcome_state.set(None);
+            });
             let text = format!("{} best guess: {} - {}", O::NAME, station, cost);
             let column = html! { <label class="col-form-label" {onclick}>{text}</label> };
             columns.push(column)
@@ -58,18 +63,21 @@ pub fn App(props: &Props) -> Html {
             all_stations,
             possible_stations,
             &station_state,
+            &outcome_state,
         );
         add_col::<SizeOptimiser>(
             &mut columns,
             all_stations,
             possible_stations,
             &station_state,
+            &outcome_state,
         );
         add_col::<EntropyOptimiser>(
             &mut columns,
             all_stations,
             possible_stations,
             &station_state,
+            &outcome_state,
         );
         rows.push(columns);
     }
