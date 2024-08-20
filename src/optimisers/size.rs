@@ -19,18 +19,18 @@ impl PartialOrd for Size {
 
 impl Ord for Size {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        other.0.cmp(&self.0)
+        self.0.cmp(&other.0)
     }
 }
 
-impl Score for Size {}
+impl Cost for Size {}
 
 pub struct SizeOptimiser;
 
 impl Optimiser for SizeOptimiser {
     const NAME: &'static str = "size";
 
-    fn optimise(all_stations: &[Station], possible_stations: &[Station]) -> Output<impl Score> {
+    fn optimise(all_stations: &[Station], possible_stations: &[Station]) -> Output<impl Cost> {
         let mut min_max_size = usize::MAX;
         let mut best_guess = None;
         let mut possible_station_picked = false;
@@ -57,7 +57,7 @@ impl Optimiser for SizeOptimiser {
 
         Output {
             station: best_guess.unwrap(),
-            score: Size(min_max_size),
+            cost: Size(min_max_size),
         }
     }
 }

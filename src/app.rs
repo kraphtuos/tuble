@@ -35,7 +35,7 @@ pub fn App(props: &Props) -> Html {
     };
     let mut child = html! {};
     let station_state = use_state(|| None::<Station>);
-    let choice_state = use_state(|| None::<Choice>);
+    let outcome_state = use_state(|| None::<Outcome>);
     let mut rows = vec![];
     {
         // Best guess row
@@ -46,10 +46,10 @@ pub fn App(props: &Props) -> Html {
             possible_stations: &[Station],
             station_state: &UseStateHandle<Option<Station>>,
         ) {
-            let Output { station, score } = O::optimise(&all_stations, &possible_stations);
+            let Output { station, cost } = O::optimise(&all_stations, &possible_stations);
             let station_state = station_state.clone();
             let onclick = Callback::from(move |_| station_state.set(Some(station)));
-            let text = format!("{} best guess: {} - {}", O::NAME, station, score);
+            let text = format!("{} best guess: {} - {}", O::NAME, station, cost);
             let column = html! { <label class="col-form-label" {onclick}>{text}</label> };
             columns.push(column)
         }
@@ -77,16 +77,19 @@ pub fn App(props: &Props) -> Html {
         // Station selector
         let select_props = {
             let station_state = station_state.clone();
-            let choice_state = choice_state.clone();
+            let outcome_state = outcome_state.clone();
             let name = "station".into();
             let placeholder = "select station".into();
-            let choices = all_stations.clone();
+            let choices = all_stations
+                .iter()
+                .map(|&station| (station, station))
+                .collect();
             let selected = *station_state;
             let submit = Callback::from(move |choice: Option<Station>| {
                 station_state.set(choice);
-                choice_state.set(None);
+                outcome_state.set(None);
             });
-            SelectProps::<Station> {
+            SelectProps::<Station, Station> {
                 name,
                 placeholder,
                 choices,
@@ -94,7 +97,9 @@ pub fn App(props: &Props) -> Html {
                 submit,
             }
         };
-        rows.push(vec![html! { <SelectComponent<Station> ..select_props /> }]);
+        rows.push(vec![
+            html! { <SelectComponent<Station, Station> ..select_props /> },
+        ]);
     }
     if let Some(station) = *station_state {
         let possible_outcomes = get_possible_states(&station, possible_stations);
@@ -105,47 +110,63 @@ pub fn App(props: &Props) -> Html {
                 columns: &mut Vec<Html>,
                 all_stations: &[Station],
                 possible_outcomes: &std::collections::BTreeMap<Outcome, Vec<Station>>,
+                outcome_state: &UseStateHandle<Option<Outcome>>,
             ) {
-                let worse_case = possible_outcomes
+                let (&outcome, cost) = possible_outcomes
                     .iter()
                     .map(|(outcome, possible_stations)| {
-                        (outcome, O::optimise(all_stations, possible_stations).score)
+                        (outcome, O::optimise(all_stations, possible_stations).cost)
                     })
                     .max_by_key(|x| x.1)
                     .unwrap();
-                let text = format!(
-                    "{} worse case: {} - {}",
-                    O::NAME,
-                    worse_case.0,
-                    worse_case.1
-                );
-                let column = html! { <label class="col-form-label">{text}</label> };
+                let outcome_state = outcome_state.clone();
+                let onclick = Callback::from(move |_| outcome_state.set(Some(outcome)));
+                let text = format!("{} worse case: {} - {}", O::NAME, outcome, cost);
+                let column = html! { <label class="col-form-label" {onclick}>{text}</label> };
                 columns.push(column);
             }
-            add_col::<MinimaxOptimiser>(&mut columns, all_stations, &possible_outcomes);
-            add_col::<SizeOptimiser>(&mut columns, all_stations, &possible_outcomes);
-            add_col::<EntropyOptimiser>(&mut columns, all_stations, &possible_outcomes);
+            add_col::<MinimaxOptimiser>(
+                &mut columns,
+                all_stations,
+                &possible_outcomes,
+                &outcome_state,
+            );
+            add_col::<SizeOptimiser>(
+                &mut columns,
+                all_stations,
+                &possible_outcomes,
+                &outcome_state,
+            );
+            add_col::<EntropyOptimiser>(
+                &mut columns,
+                all_stations,
+                &possible_outcomes,
+                &outcome_state,
+            );
             rows.push(columns);
         };
         {
             // Outcome selector
             let select_props = {
-                let choice_state = choice_state.clone();
+                let outcome_state = outcome_state.clone();
                 let name = "outcome".into();
                 let placeholder = "select outcome".into();
                 let choices: Vec<_> = possible_outcomes
                     .iter()
-                    .map(|(outcome, possible_stations)| Choice {
-                        outcome: outcome.to_owned(),
-                        possible_stations: possible_stations.len(),
+                    .map(|(&outcome, possible_stations)| {
+                        let choice = Choice {
+                            outcome: outcome,
+                            possible_stations: possible_stations.len(),
+                        };
+                        (outcome, choice)
                     })
                     .collect();
-                let selected = *choice_state;
-                let submit = Callback::from(move |choice: Option<Choice>| {
+                let selected = *outcome_state;
+                let submit = Callback::from(move |outcome: Option<Outcome>| {
                     // CR: The child component should be re-rendered here.
-                    choice_state.set(choice);
+                    outcome_state.set(outcome);
                 });
-                SelectProps::<Choice> {
+                SelectProps::<Outcome, Choice> {
                     name,
                     placeholder,
                     choices,
@@ -153,10 +174,11 @@ pub fn App(props: &Props) -> Html {
                     submit,
                 }
             };
-            rows.push(vec![html! { <SelectComponent<Choice> ..select_props /> }]);
+            rows.push(vec![
+                html! { <SelectComponent<Outcome, Choice> ..select_props /> },
+            ]);
         }
-        if let Some(choice) = *choice_state {
-            let outcome = choice.outcome;
+        if let Some(outcome) = *outcome_state {
             if let Some(possible_stations) = possible_outcomes.get(&outcome) {
                 let props = Props {
                     all_stations: all_stations.clone(),

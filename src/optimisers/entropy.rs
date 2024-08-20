@@ -21,14 +21,14 @@ impl Ord for Entropy {
     }
 }
 
-impl Score for Entropy {}
+impl Cost for Entropy {}
 
 pub struct EntropyOptimiser;
 
 impl Optimiser for EntropyOptimiser {
     const NAME: &'static str = "entropy";
 
-    fn optimise(all_stations: &[Station], possible_stations: &[Station]) -> Output<impl Score> {
+    fn optimise(all_stations: &[Station], possible_stations: &[Station]) -> Output<impl Cost> {
         let mut max_entropy = f64::MIN;
         let mut best_guess = None;
         let mut possible_station_picked = false;
@@ -39,10 +39,6 @@ impl Optimiser for EntropyOptimiser {
             let entropy = -get_possible_states(station, possible_stations)
                 .into_iter()
                 .map(|(_, possible_stations)| {
-                    #[cfg(target_arch = "wasm32")]
-                    if possible_stations.len() == 0 {
-                        web_sys::console::log_1(&"zero length".into());
-                    }
                     let p = possible_stations.len() as f64 / n;
                     p * p.log2()
                 })
@@ -63,7 +59,7 @@ impl Optimiser for EntropyOptimiser {
 
         Output {
             station: best_guess.unwrap(),
-            score: Entropy(max_entropy),
+            cost: Entropy(max_entropy),
         }
     }
 }

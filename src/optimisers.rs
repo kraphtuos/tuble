@@ -22,15 +22,15 @@ pub fn get_possible_states(
     map
 }
 
-pub trait Score: Copy + std::fmt::Display + Ord {} // Higher scores are better
+pub trait Cost: Copy + std::fmt::Display + Ord {}
 
-pub struct Output<S: Score> {
+pub struct Output<C: Cost> {
     pub station: Station,
-    pub score: S,
+    pub cost: C,
 }
 
 pub trait Optimiser {
     const NAME: &'static str;
 
-    fn optimise(all_stations: &[Station], possible_stations: &[Station]) -> Output<impl Score>;
+    fn optimise(all_stations: &[Station], possible_stations: &[Station]) -> Output<impl Cost>;
 }
