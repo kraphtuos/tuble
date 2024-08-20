@@ -33,18 +33,48 @@ pub fn App(props: &Props) -> Html {
     if possible_stations.len() == 1 {
         return html! { <div class="container"><p>{format!("answer: {}", possible_stations[0])}</p></div> };
     };
-    let best_guess_minimax = minimax::optimise(&all_stations, &possible_stations);
-    let best_guess_size = size::optimise(&all_stations, &possible_stations);
-    let best_guess_entropy = entropy::optimise(&all_stations, &possible_stations);
+    let mut child = html! {};
     let station_state = use_state(|| None::<Station>);
     let choice_state = use_state(|| None::<Choice>);
-    let mut columns = vec![
-        html! { <label class="col-form-label">{format!("minimax best guess: {} - {}", best_guess_minimax.0, best_guess_minimax.1)}</label> },
-        html! { <label class="col-form-label">{format!("size best guess: {} - {}", best_guess_size.0, best_guess_size.1)}</label> },
-        html! { <label class="col-form-label">{format!("entropy best guess: {} - {}", best_guess_entropy.0, best_guess_entropy.1)}</label> },
-    ];
-    let mut child = html! {};
+    let mut rows = vec![];
     {
+        // Best guess row
+        let mut columns = vec![];
+        fn add_col<O: Optimiser>(
+            columns: &mut Vec<Html>,
+            all_stations: &[Station],
+            possible_stations: &[Station],
+            station_state: &UseStateHandle<Option<Station>>,
+        ) {
+            let Output { station, score } = O::optimise(&all_stations, &possible_stations);
+            let station_state = station_state.clone();
+            let onclick = Callback::from(move |_| station_state.set(Some(station)));
+            let text = format_output::<O>(&station, &score, " best guess");
+            let column = html! { <label class="col-form-label" {onclick}>{text}</label> };
+            columns.push(column)
+        }
+        add_col::<MinimaxOptimiser>(
+            &mut columns,
+            all_stations,
+            possible_stations,
+            &station_state,
+        );
+        add_col::<SizeOptimiser>(
+            &mut columns,
+            all_stations,
+            possible_stations,
+            &station_state,
+        );
+        add_col::<EntropyOptimiser>(
+            &mut columns,
+            all_stations,
+            possible_stations,
+            &station_state,
+        );
+        rows.push(columns);
+    }
+    {
+        // Station selector
         let select_props = {
             let station_state = station_state.clone();
             let choice_state = choice_state.clone();
@@ -64,49 +94,41 @@ pub fn App(props: &Props) -> Html {
                 submit,
             }
         };
-        columns.push(html! { <SelectComponent<Station> ..select_props /> });
+        rows.push(vec![html! { <SelectComponent<Station> ..select_props /> }]);
     }
     if let Some(station) = *station_state {
         let possible_outcomes = get_possible_states(&station, possible_stations);
         {
-            let worse_case_minimax = possible_outcomes
-                .iter()
-                .map(|(outcome, possible_stations)| {
-                    (
-                        outcome,
-                        minimax::optimise(all_stations, possible_stations).1,
-                    )
-                })
-                .max_by_key(|x| x.1)
-                .unwrap();
-            let worse_case_size = possible_outcomes
-                .iter()
-                .map(|(outcome, possible_stations)| {
-                    (outcome, size::optimise(all_stations, possible_stations).1)
-                })
-                .max_by_key(|x| x.1)
-                .unwrap();
-            let worse_case_entropy = possible_outcomes
-                .iter()
-                .map(|(outcome, possible_stations)| {
-                    (
-                        outcome,
-                        entropy::optimise(all_stations, possible_stations).1,
-                    )
-                })
-                .max_by(|x, y| x.1.partial_cmp(&y.1).unwrap())
-                .unwrap();
-            columns.push(
-                html! { <label class="col-form-label">{format!("minimax worse case: {} - {}", worse_case_minimax.0, worse_case_minimax.1)}</label> },
-            );
-            columns.push(
-                html! { <label class="col-form-label">{format!("size worse case: {} - {}", worse_case_size.0, worse_case_size.1)}</label> }
-            );
-            columns.push(
-                html! { <label class="col-form-label">{format!("entropy worse case: {} - {}", worse_case_entropy.0, worse_case_entropy.1)}</label> }
-            );
+            // Worse outcome
+            let mut columns = vec![];
+            fn add_col<O: Optimiser>(
+                columns: &mut Vec<Html>,
+                all_stations: &[Station],
+                possible_outcomes: &std::collections::BTreeMap<Outcome, Vec<Station>>,
+            ) {
+                let worse_case = possible_outcomes
+                    .iter()
+                    .map(|(outcome, possible_stations)| {
+                        (outcome, O::optimise(all_stations, possible_stations).score)
+                    })
+                    .max_by_key(|x| x.1)
+                    .unwrap();
+                let text = format!(
+                    "{} worse case: {} - {}",
+                    O::NAME,
+                    worse_case.0,
+                    worse_case.1
+                );
+                let column = html! { <label class="col-form-label">{text}</label> };
+                columns.push(column);
+            }
+            add_col::<MinimaxOptimiser>(&mut columns, all_stations, &possible_outcomes);
+            add_col::<SizeOptimiser>(&mut columns, all_stations, &possible_outcomes);
+            add_col::<EntropyOptimiser>(&mut columns, all_stations, &possible_outcomes);
+            rows.push(columns);
         };
         {
+            // Outcome selector
             let select_props = {
                 let choice_state = choice_state.clone();
                 let name = "outcome".into();
@@ -131,7 +153,7 @@ pub fn App(props: &Props) -> Html {
                     submit,
                 }
             };
-            columns.push(html! { <SelectComponent<Choice> ..select_props /> });
+            rows.push(vec![html! { <SelectComponent<Choice> ..select_props /> }]);
         }
         if let Some(choice) = *choice_state {
             let outcome = choice.outcome;
@@ -147,7 +169,15 @@ pub fn App(props: &Props) -> Html {
     html! {
         <div class="container">
             <div class="row mb-3">
-                { for columns.into_iter().map(|col| html! { <div class="col-auto">{col}</div> }) }
+                {
+                    for rows.into_iter().map(|columns|
+                        html! {
+                            <div class="row">
+                                { for columns.into_iter().map(|col| html! { <div class="col-auto">{col}</div> }) }
+                            </div>
+                        }
+                    )
+                 }
             </div>
             {child}
         </div>

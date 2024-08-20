@@ -40,7 +40,7 @@ impl std::fmt::Display for Outcome {
 }
 
 impl Station {
-    pub fn from(idx: usize) -> Self {
+    fn from(idx: usize) -> Self {
         if idx >= STATIONS.len() {
             panic!("Cannot handle station idx: {}", idx);
         }
@@ -61,6 +61,6 @@ impl Station {
     }
 
     pub fn all_stations() -> Vec<Self> {
-        (0..STATIONS.len()).map(Station::from).collect()
+        (0..STATIONS.len()).map(Self::from).collect()
     }
 }
