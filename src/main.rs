@@ -4,10 +4,8 @@ use tuble::*;
 fn main() {
     let all_stations = Station::all_stations();
     fn print<O: Optimiser>(all_stations: &[Station]) {
-        println!(
-            "{}",
-            optimise_and_output::<O>(all_stations, all_stations, "")
-        )
+        let Output { station, score } = O::optimise(&all_stations, &all_stations);
+        println!("{}: {} - {}", O::NAME, station, score);
     }
     print::<MinimaxOptimiser>(&all_stations);
     print::<SizeOptimiser>(&all_stations);

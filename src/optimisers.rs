@@ -34,16 +34,3 @@ pub trait Optimiser {
 
     fn optimise(all_stations: &[Station], possible_stations: &[Station]) -> Output<impl Score>;
 }
-
-pub fn format_output<O: Optimiser>(station: &Station, score: &impl Score, text: &str) -> String {
-    format!("{} {}: {} - {}", O::NAME, text, station, score)
-}
-
-pub fn optimise_and_output<O: Optimiser>(
-    all_stations: &[Station],
-    possible_stations: &[Station],
-    text: &str,
-) -> String {
-    let Output { station, score } = O::optimise(all_stations, possible_stations);
-    format_output::<O>(&station, &score, text)
-}
