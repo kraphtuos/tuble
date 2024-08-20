@@ -49,7 +49,7 @@ pub fn App(props: &Props) -> Html {
             let Output { station, score } = O::optimise(&all_stations, &possible_stations);
             let station_state = station_state.clone();
             let onclick = Callback::from(move |_| station_state.set(Some(station)));
-            let text = format_output::<O>(&station, &score, " best guess");
+            let text = format!("{} best guess: {} - {}", O::NAME, station, score);
             let column = html! { <label class="col-form-label" {onclick}>{text}</label> };
             columns.push(column)
         }
