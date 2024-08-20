@@ -6,7 +6,7 @@ use yew::prelude::*;
 pub struct SelectProps<K: PartialEq, T: PartialEq> {
     pub name: AttrValue,
     pub placeholder: AttrValue,
-    pub choices: Vec<(K, T)>,
+    pub choices: Vec<(K, T)>, // CR: Use IArray.
     pub selected: Option<K>,
     pub submit: Callback<Option<K>>,
 }
