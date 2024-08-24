@@ -2,10 +2,12 @@ use crate::*;
 use std::collections::{BTreeMap, HashMap};
 
 mod entropy;
+mod expectation;
 mod minimax;
 mod size;
 
 pub use entropy::EntropyOptimiser;
+pub use expectation::ExpectationOptimiser;
 pub use minimax::MinimaxOptimiser;
 pub use size::SizeOptimiser;
 

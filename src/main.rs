@@ -10,6 +10,7 @@ fn main() {
     print::<MinimaxOptimiser>(&all_stations);
     print::<SizeOptimiser>(&all_stations);
     print::<EntropyOptimiser>(&all_stations);
+    print::<ExpectationOptimiser>(&all_stations);
 }
 
 #[cfg(target_arch = "wasm32")]
