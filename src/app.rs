@@ -79,6 +79,13 @@ pub fn App(props: &Props) -> Html {
             &station_state,
             &outcome_state,
         );
+        add_col::<ExpectationOptimiser>(
+            &mut columns,
+            all_stations,
+            possible_stations,
+            &station_state,
+            &outcome_state,
+        );
         rows.push(columns);
     }
     {
@@ -146,6 +153,12 @@ pub fn App(props: &Props) -> Html {
                 &outcome_state,
             );
             add_col::<EntropyOptimiser>(
+                &mut columns,
+                all_stations,
+                &possible_outcomes,
+                &outcome_state,
+            );
+            add_col::<ExpectationOptimiser>(
                 &mut columns,
                 all_stations,
                 &possible_outcomes,
