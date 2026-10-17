@@ -42,6 +42,24 @@ impl fmt::Display for Choice {
     }
 }
 
+/// A clickable suggestion with its cost, whose meaning is shown on hover.
+fn suggestion(
+    optimiser: &dyn AnyOptimiser,
+    text: String,
+    cost: &str,
+    onclick: Callback<MouseEvent>,
+) -> Html {
+    html! {
+        <>
+            <button type="button" class="btn btn-outline-primary btn-sm" {onclick}>
+                {format!("{}: {}", optimiser.name(), text)}
+            </button>
+            {" "}
+            <abbr class="small text-muted" title={optimiser.cost_description()}>{cost.to_owned()}</abbr>
+        </>
+    }
+}
+
 #[function_component]
 pub fn App(props: &Props) -> Html {
     let Props {
@@ -52,26 +70,51 @@ pub fn App(props: &Props) -> Html {
     // Hooks must run on every render, so they come before the early return.
     let station_state = use_state_eq(|| None::<Station>);
     let outcome_state = use_state_eq(|| None::<Outcome>);
+    let best_guesses = use_memo(
+        |(possible_stations, optimisers)| {
+            optimisers
+                .0
+                .iter()
+                .map(|optimiser| optimiser.best_guess(*possible_stations))
+                .collect::<Vec<_>>()
+        },
+        (possible_stations, optimisers.clone()),
+    );
+    let worst_outcomes = use_memo(
+        |(station, possible_stations, optimisers)| {
+            station.map(|station| {
+                optimisers
+                    .0
+                    .iter()
+                    .map(|optimiser| optimiser.worst_outcome(station, *possible_stations))
+                    .collect::<Vec<_>>()
+            })
+        },
+        (*station_state, possible_stations, optimisers.clone()),
+    );
     if possible_stations.len() == 1 {
         return html! { <div class="container"><p>{format!("answer: {}", possible_stations.first().unwrap())}</p></div> };
     };
     let mut child = html! {};
     let mut rows = vec![];
+    rows.push(vec![html! {
+        <span class="small text-muted">{format!("{} possible stations", possible_stations.len())}</span>
+    }]);
     {
         // Best guess row
         let columns = optimisers
             .0
             .iter()
-            .map(|optimiser| {
-                let (station, cost) = optimiser.best_guess(possible_stations);
+            .zip(best_guesses.iter())
+            .map(|(optimiser, (station, cost))| {
+                let station = *station;
                 let station_state = station_state.clone();
                 let outcome_state = outcome_state.clone();
                 let onclick = Callback::from(move |_| {
                     station_state.set(Some(station));
                     outcome_state.set(None);
                 });
-                let text = format!("{} best guess: {} - {}", optimiser.name(), station, cost);
-                html! { <label class="col-form-label" {onclick}>{text}</label> }
+                suggestion(optimiser.as_ref(), station.to_string(), cost, onclick)
             })
             .collect();
         rows.push(columns);
@@ -101,19 +144,20 @@ pub fn App(props: &Props) -> Html {
             html! { <SelectComponent<Station, Station> ..select_props /> },
         ]);
     }
-    if let Some(station) = *station_state {
+    if let (Some(station), Some(worst_outcomes)) = (*station_state, worst_outcomes.as_ref()) {
         let possible_outcomes = partition(station, possible_stations);
         {
-            // Worse outcome
+            // Worst outcome row
             let columns = optimisers
                 .0
                 .iter()
-                .map(|optimiser| {
-                    let (outcome, cost) = optimiser.worst_outcome(station, possible_stations);
+                .zip(worst_outcomes)
+                .map(|(optimiser, (outcome, cost))| {
+                    let outcome = *outcome;
                     let outcome_state = outcome_state.clone();
                     let onclick = Callback::from(move |_| outcome_state.set(Some(outcome)));
-                    let text = format!("{} worse case: {} - {}", optimiser.name(), outcome, cost);
-                    html! { <label class="col-form-label" {onclick}>{text}</label> }
+                    let text = format!("worst case {}", outcome);
+                    suggestion(optimiser.as_ref(), text, cost, onclick)
                 })
                 .collect();
             rows.push(columns);
