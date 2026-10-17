@@ -34,7 +34,9 @@ Install [trunk](https://trunkrs.dev/) and run
 trunk serve --release
 ```
 
-Pushes to `main` also deploy it to GitHub Pages.
+The Pages workflow builds and deploys it to GitHub Pages on every push to
+`main`, or when run by hand from the Actions tab. It needs the repository's
+Pages source set to "GitHub Actions" under Settings → Pages.
 
 ### Command line
 
