@@ -46,7 +46,9 @@ impl std::fmt::Display for Outcome {
             ZoneOutcome::TwoAway => "2",
             ZoneOutcome::MoreThanTwo => ">2",
         };
-        write!(f, "{} stops, {} zones", stops, zones)
+        let stops_plural = if *stops == 1 { "" } else { "s" };
+        let zones_plural = if zones == "1" { "" } else { "s" };
+        write!(f, "{stops} stop{stops_plural}, {zones} zone{zones_plural}")
     }
 }
 
