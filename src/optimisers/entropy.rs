@@ -2,7 +2,7 @@
 
 use super::*;
 
-#[derive(Clone, Copy, PartialEq, PartialOrd)]
+#[derive(Clone, Copy)]
 struct Entropy(f64);
 
 impl std::fmt::Display for Entropy {
@@ -11,13 +11,23 @@ impl std::fmt::Display for Entropy {
     }
 }
 
-impl Eq for Entropy {
-    fn assert_receiver_is_total_eq(&self) {}
+impl PartialEq for Entropy {
+    fn eq(&self, other: &Self) -> bool {
+        self.cmp(other).is_eq()
+    }
+}
+
+impl Eq for Entropy {}
+
+impl PartialOrd for Entropy {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl Ord for Entropy {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.partial_cmp(other).unwrap()
+        self.0.total_cmp(&other.0)
     }
 }
 
@@ -37,8 +47,8 @@ impl Optimiser for EntropyOptimiser {
 
         for station in all_stations {
             let entropy = get_possible_states(station, possible_stations)
-                .into_iter()
-                .map(|(_, possible_stations)| {
+                .into_values()
+                .map(|possible_stations| {
                     let l = possible_stations.len() as f64;
                     l / n * l.log2()
                 })
