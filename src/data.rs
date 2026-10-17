@@ -1,5 +1,5 @@
-const STATIONS: [&str; 269] = include!("../data/stations.json");
-const DISTANCES: [[[u8; 2]; 269]; 269] = include!("../data/distances.json");
+static STATIONS: [&str; 269] = include!("../data/stations.json");
+static DISTANCES: [[[u8; 2]; 269]; 269] = include!("../data/distances.json");
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct Station {
@@ -47,7 +47,7 @@ impl Station {
         Self { idx }
     }
 
-    pub fn get_outcome(self: &Self, other: &Self) -> Outcome {
+    pub fn get_outcome(&self, other: &Self) -> Outcome {
         let distance = DISTANCES[self.idx][other.idx];
         let stops = distance[0];
         let zones = match distance[1] {

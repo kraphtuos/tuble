@@ -37,8 +37,8 @@ impl Optimiser for SizeOptimiser {
 
         for station in all_stations {
             let max_size = get_possible_states(station, possible_stations)
-                .iter()
-                .map(|(_, possible_stations)| possible_stations.len())
+                .values()
+                .map(|possible_stations| possible_stations.len())
                 .max()
                 .unwrap();
 

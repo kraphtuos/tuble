@@ -47,7 +47,7 @@ pub fn App(props: &Props) -> Html {
             station_state: &UseStateHandle<Option<Station>>,
             outcome_state: &UseStateHandle<Option<Outcome>>,
         ) {
-            let Output { station, cost } = O::optimise(&all_stations, &possible_stations);
+            let Output { station, cost } = O::optimise(all_stations, possible_stations);
             let station_state = station_state.clone();
             let outcome_state = outcome_state.clone();
             let onclick = Callback::from(move |_| {
@@ -176,7 +176,7 @@ pub fn App(props: &Props) -> Html {
                     .iter()
                     .map(|(&outcome, possible_stations)| {
                         let choice = Choice {
-                            outcome: outcome,
+                            outcome,
                             possible_stations: possible_stations.len(),
                         };
                         (outcome, choice)

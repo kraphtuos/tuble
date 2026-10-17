@@ -4,7 +4,7 @@ use tuble::*;
 fn main() {
     let all_stations = Station::all_stations();
     fn print<O: Optimiser>(all_stations: &[Station]) {
-        let Output { station, cost } = O::optimise(&all_stations, &all_stations);
+        let Output { station, cost } = O::optimise(all_stations, all_stations);
         println!("{}: {} - {}", O::NAME, station, cost);
     }
     print::<MinimaxOptimiser>(&all_stations);
