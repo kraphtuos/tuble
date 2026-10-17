@@ -20,6 +20,17 @@ pub enum ZoneOutcome {
     MoreThanTwo,
 }
 
+impl ZoneOutcome {
+    fn from_zones(zones: u8) -> Self {
+        match zones {
+            0 => Self::Correct,
+            1 => Self::OneAway,
+            2 => Self::TwoAway,
+            _ => Self::MoreThanTwo,
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Outcome {
     pub stops: u8,
@@ -39,6 +50,25 @@ impl std::fmt::Display for Outcome {
     }
 }
 
+/// Parses an outcome as stops then zones, e.g. `3 1` or `7 >2`.
+impl std::str::FromStr for Outcome {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let error = || format!("expected stops then zones, e.g. \"3 1\" or \"7 >2\", got {s:?}");
+        let [stops, zones] = s.split_whitespace().collect::<Vec<_>>()[..] else {
+            return Err(error());
+        };
+        let stops = stops.parse().map_err(|_| error())?;
+        let zones = match zones.strip_prefix('>') {
+            Some("2") => ZoneOutcome::MoreThanTwo,
+            Some(_) => return Err(error()),
+            None => ZoneOutcome::from_zones(zones.parse().map_err(|_| error())?),
+        };
+        Ok(Self { stops, zones })
+    }
+}
+
 impl Station {
     pub fn name(&self) -> &'static str {
         STATIONS[self.idx]
@@ -51,14 +81,10 @@ impl Station {
 
     pub fn get_outcome(&self, other: &Self) -> Outcome {
         let [stops, zones] = DISTANCES[self.idx][other.idx];
-        let zones = match zones {
-            0 => ZoneOutcome::Correct,
-            1 => ZoneOutcome::OneAway,
-            2 => ZoneOutcome::TwoAway,
-            _ => ZoneOutcome::MoreThanTwo,
-        };
-
-        Outcome { stops, zones }
+        Outcome {
+            stops,
+            zones: ZoneOutcome::from_zones(zones),
+        }
     }
 
     pub fn all() -> impl Iterator<Item = Self> {

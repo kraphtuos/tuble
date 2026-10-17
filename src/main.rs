@@ -1,17 +1,14 @@
-use tuble::*;
+#[cfg(not(target_arch = "wasm32"))]
+mod cli;
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
-    let possible_stations = StationSet::all();
-    for optimiser in all_optimisers() {
-        let (station, cost) = optimiser.best_guess(possible_stations);
-        println!("{}: {} - {}", optimiser.name(), station, cost);
-    }
+    cli::main();
 }
 
 #[cfg(target_arch = "wasm32")]
 fn main() {
-    use app::*;
+    use tuble::{app::*, *};
 
     yew::Renderer::<App>::with_props(Props {
         possible_stations: StationSet::all(),
