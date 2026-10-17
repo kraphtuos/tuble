@@ -37,7 +37,13 @@ pub fn SelectComponent<K: PartialEq + Copy + 'static, T: PartialEq + Display + C
         submit.reform(move |_| {
             select_ref
                 .cast::<HtmlSelectElement>()
-                .and_then(|select| choices.get(select.selected_index() as usize - 1))
+                .and_then(|select| {
+                    // Index 0 is the placeholder.
+                    let idx = usize::try_from(select.selected_index())
+                        .ok()?
+                        .checked_sub(1)?;
+                    choices.get(idx)
+                })
                 .map(|x| x.0)
         })
     };
