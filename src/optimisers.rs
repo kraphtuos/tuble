@@ -135,3 +135,68 @@ pub fn guesses_to_find(optimiser: &dyn AnyOptimiser, target: Station) -> usize {
     }
     unreachable!()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn guesses(optimiser: &dyn AnyOptimiser) -> Vec<usize> {
+        Station::all()
+            .map(|target| guesses_to_find(optimiser, target))
+            .collect()
+    }
+
+    #[test]
+    fn minimax_cost_is_the_worst_case() {
+        let optimiser = MinimaxOptimiser::default();
+        let cost = optimiser.optimise(StationSet::all()).cost;
+        assert_eq!(guesses(&optimiser).into_iter().max(), Some(cost.0));
+    }
+
+    #[test]
+    fn expectation_cost_is_the_mean() {
+        let optimiser = ExpectationOptimiser::default();
+        let cost = optimiser.optimise(StationSet::all()).cost;
+        assert_eq!(guesses(&optimiser).into_iter().sum::<usize>(), cost.total);
+        assert_eq!(cost.count, Station::all().count());
+    }
+
+    #[test]
+    fn recursive_optimisers_beat_heuristics() {
+        let total = |optimiser: &dyn AnyOptimiser| guesses(optimiser).into_iter().sum::<usize>();
+        let worst = |optimiser: &dyn AnyOptimiser| guesses(optimiser).into_iter().max();
+        let minimax = MinimaxOptimiser::default();
+        let expectation = ExpectationOptimiser::default();
+        for optimiser in all_optimisers() {
+            assert!(
+                total(&expectation) <= total(optimiser.as_ref()),
+                "{}",
+                optimiser.name()
+            );
+            assert!(
+                worst(&minimax) <= worst(optimiser.as_ref()),
+                "{}",
+                optimiser.name()
+            );
+        }
+    }
+
+    #[test]
+    fn small_sets() {
+        let mut stations = Station::all();
+        let (a, b) = (stations.next().unwrap(), stations.next().unwrap());
+        for optimiser in all_optimisers() {
+            let one: StationSet = [a].into_iter().collect();
+            assert_eq!(optimiser.best_guess(one).0, a, "{}", optimiser.name());
+            let two: StationSet = [a, b].into_iter().collect();
+            assert!(
+                two.contains(optimiser.best_guess(two).0),
+                "{}",
+                optimiser.name()
+            );
+        }
+        let two: StationSet = [a, b].into_iter().collect();
+        let cost = ExpectationOptimiser::default().optimise(two).cost;
+        assert_eq!(cost.to_string(), "1.5000");
+    }
+}

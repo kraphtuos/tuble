@@ -151,3 +151,61 @@ impl FromIterator<Station> for StationSet {
         set
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn distances_are_consistent() {
+        for a in Station::all() {
+            for b in Station::all() {
+                let outcome = a.get_outcome(&b);
+                assert!(outcome == b.get_outcome(&a), "{a} and {b} not symmetric");
+                assert_eq!(outcome.stops == 0, a == b, "{a} to {b} is {outcome}");
+                if a == b {
+                    assert_eq!(outcome.zones, ZoneOutcome::Correct);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn station_names_are_unique() {
+        for station in Station::all() {
+            assert_eq!(Station::find(station.name()), Some(station));
+        }
+        assert_eq!(
+            Station::find(" bank - monument "),
+            Station::find("Bank - Monument")
+        );
+        assert_eq!(Station::find("Nowhere"), None);
+    }
+
+    #[test]
+    fn station_set() {
+        let all = StationSet::all();
+        assert_eq!(all.len(), STATIONS.len());
+        assert!(all.iter().eq(Station::all()));
+
+        let mut set = StationSet::default();
+        assert!(set.is_empty());
+        let last = Station::all().last().unwrap();
+        set.insert(last);
+        assert!(set.contains(last) && set.len() == 1 && set.first() == Some(last));
+        set.remove(last);
+        assert!(set.is_empty());
+    }
+
+    #[test]
+    fn parse_outcome() {
+        let outcome = |stops, zones| Ok(Outcome { stops, zones });
+        assert_eq!("3 1".parse(), outcome(3, ZoneOutcome::OneAway));
+        assert_eq!(" 0  0 ".parse(), outcome(0, ZoneOutcome::Correct));
+        assert_eq!("7 >2".parse(), outcome(7, ZoneOutcome::MoreThanTwo));
+        assert_eq!("7 5".parse(), outcome(7, ZoneOutcome::MoreThanTwo));
+        for bad in ["", "3", "3 1 1", "x 1", "3 >1", "-1 0"] {
+            assert!(bad.parse::<Outcome>().is_err(), "{bad:?} parsed");
+        }
+    }
+}

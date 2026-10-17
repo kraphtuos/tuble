@@ -3,7 +3,7 @@
 use super::*;
 
 #[derive(Clone, Copy)]
-pub struct Entropy(f64);
+pub struct Entropy(pub f64);
 
 impl std::fmt::Display for Entropy {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

@@ -3,7 +3,7 @@
 use super::*;
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Steps(usize);
+pub struct Steps(pub usize);
 
 impl std::fmt::Display for Steps {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
