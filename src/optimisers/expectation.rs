@@ -6,8 +6,8 @@ use super::*;
 /// needed over `count` equally likely targets.
 #[derive(Clone, Copy)]
 pub struct Expectation {
-    total: usize,
-    count: usize,
+    pub total: usize,
+    pub count: usize,
 }
 
 impl std::fmt::Display for Expectation {
