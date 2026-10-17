@@ -51,6 +51,9 @@ cargo run --release -- [best | eval | play]
 
 ## Data
 
+The data was taken from the [tuble](https://tuble.co.uk/) website itself, so
+it may need refreshing if the game's stations change.
+
 - `data/stations.json` lists the station names.
 - `data/distances.json` holds `[stops, zones]` between every pair of
   stations, indexed in the same order.
