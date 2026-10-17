@@ -1,13 +1,13 @@
-//! Optimise for maximal entropy.
+//! Optimise for maximal information gained, i.e. minimal expected entropy left.
 
 use super::*;
 
 #[derive(Clone, Copy)]
-struct Entropy(f64);
+pub struct Entropy(f64);
 
 impl std::fmt::Display for Entropy {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{:.4}", self.0)
     }
 }
 
@@ -37,39 +37,27 @@ pub struct EntropyOptimiser;
 
 impl Optimiser for EntropyOptimiser {
     const NAME: &'static str = "entropy";
+    const COST: &'static str = "expected bits of entropy left after the guess";
 
-    fn optimise(all_stations: &[Station], possible_stations: &[Station]) -> Output<impl Cost> {
-        let mut min_entropy = f64::MAX;
-        let mut best_guess = None;
-        let mut possible_station_picked = false;
+    type Cost = Entropy;
 
+    fn optimise(&self, possible_stations: StationSet) -> Output<Entropy> {
         let n = possible_stations.len() as f64;
-
-        for station in all_stations {
-            let entropy = get_possible_states(station, possible_stations)
-                .into_values()
-                .map(|possible_stations| {
-                    let l = possible_stations.len() as f64;
+        best_guess(possible_stations, |guess, _| {
+            // Sum in a fixed order so equally good guesses tie exactly.
+            let mut sizes: Vec<_> = partition(guess, possible_stations)
+                .values()
+                .map(|part| part.len())
+                .collect();
+            sizes.sort_unstable();
+            let entropy = sizes
+                .into_iter()
+                .map(|l| {
+                    let l = l as f64;
                     l / n * l.log2()
                 })
                 .sum::<f64>();
-
-            if entropy < min_entropy {
-                min_entropy = entropy;
-                best_guess = Some(*station);
-                possible_station_picked = possible_stations.contains(station);
-            } else if (entropy == min_entropy)
-                && !possible_station_picked
-                && possible_stations.contains(station)
-            {
-                possible_station_picked = true;
-                best_guess = Some(*station);
-            }
-        }
-
-        Output {
-            station: best_guess.unwrap(),
-            cost: Entropy(min_entropy),
-        }
+            Some(Entropy(entropy))
+        })
     }
 }

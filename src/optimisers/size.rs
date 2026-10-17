@@ -1,25 +1,13 @@
-//! Optimise for the size of the largest component
+//! Optimise for the size of the largest component.
 
 use super::*;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-struct Size(usize);
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Size(usize);
 
 impl std::fmt::Display for Size {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
-    }
-}
-
-impl PartialOrd for Size {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for Size {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.0.cmp(&other.0)
     }
 }
 
@@ -29,35 +17,16 @@ pub struct SizeOptimiser;
 
 impl Optimiser for SizeOptimiser {
     const NAME: &'static str = "size";
+    const COST: &'static str = "most stations left after the guess";
 
-    fn optimise(all_stations: &[Station], possible_stations: &[Station]) -> Output<impl Cost> {
-        let mut min_max_size = usize::MAX;
-        let mut best_guess = None;
-        let mut possible_station_picked = false;
+    type Cost = Size;
 
-        for station in all_stations {
-            let max_size = get_possible_states(station, possible_stations)
+    fn optimise(&self, possible_stations: StationSet) -> Output<Size> {
+        best_guess(possible_stations, |guess, _| {
+            partition(guess, possible_stations)
                 .values()
-                .map(|possible_stations| possible_stations.len())
+                .map(|part| Size(part.len()))
                 .max()
-                .unwrap();
-
-            if max_size < min_max_size {
-                min_max_size = max_size;
-                best_guess = Some(*station);
-                possible_station_picked = possible_stations.contains(station);
-            } else if (max_size == min_max_size)
-                && !possible_station_picked
-                && possible_stations.contains(station)
-            {
-                possible_station_picked = true;
-                best_guess = Some(*station);
-            }
-        }
-
-        Output {
-            station: best_guess.unwrap(),
-            cost: Size(min_max_size),
-        }
+        })
     }
 }
