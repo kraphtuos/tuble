@@ -49,12 +49,13 @@ pub fn App(props: &Props) -> Html {
         optimisers,
     } = props;
     let possible_stations = *possible_stations;
+    // Hooks must run on every render, so they come before the early return.
+    let station_state = use_state_eq(|| None::<Station>);
+    let outcome_state = use_state_eq(|| None::<Outcome>);
     if possible_stations.len() == 1 {
         return html! { <div class="container"><p>{format!("answer: {}", possible_stations.first().unwrap())}</p></div> };
     };
     let mut child = html! {};
-    let station_state = use_state_eq(|| None::<Station>);
-    let outcome_state = use_state_eq(|| None::<Outcome>);
     let mut rows = vec![];
     {
         // Best guess row
@@ -135,7 +136,6 @@ pub fn App(props: &Props) -> Html {
                     .collect();
                 let selected = *outcome_state;
                 let submit = Callback::from(move |outcome: Option<Outcome>| {
-                    // CR: The child component should be re-rendered here.
                     outcome_state.set(outcome);
                 });
                 SelectProps::<Outcome, Choice> {
@@ -156,7 +156,10 @@ pub fn App(props: &Props) -> Html {
                     possible_stations,
                     optimisers: optimisers.clone(),
                 };
-                child = html! { <App ..props /> };
+                // Key the child by what led to it so a different guess or
+                // outcome starts it afresh instead of keeping stale state.
+                let key = format!("{station:?}/{outcome:?}");
+                child = html! { <App {key} ..props /> };
             }
         }
     }
