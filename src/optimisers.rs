@@ -7,10 +7,10 @@ mod expectation;
 mod minimax;
 mod size;
 
-pub use entropy::EntropyOptimiser;
-pub use expectation::ExpectationOptimiser;
-pub use minimax::MinimaxOptimiser;
-pub use size::SizeOptimiser;
+pub use entropy::{Entropy, EntropyOptimiser};
+pub use expectation::{Expectation, ExpectationOptimiser};
+pub use minimax::{MinimaxOptimiser, Steps};
+pub use size::{Size, SizeOptimiser};
 
 /// Groups `possible_stations` by the outcome they would give for `guess`.
 pub fn partition(guess: Station, possible_stations: StationSet) -> BTreeMap<Outcome, StationSet> {
@@ -112,15 +112,6 @@ impl<O: Optimiser> AnyOptimiser for O {
             .unwrap();
         (outcome, cost.to_string())
     }
-}
-
-pub fn all_optimisers() -> Vec<Box<dyn AnyOptimiser>> {
-    vec![
-        Box::new(MinimaxOptimiser::default()),
-        Box::new(SizeOptimiser),
-        Box::new(EntropyOptimiser),
-        Box::new(ExpectationOptimiser::default()),
-    ]
 }
 
 /// The number of guesses `optimiser` takes to find `target`.
