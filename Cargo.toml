@@ -12,3 +12,10 @@ yew = { version = "0.20", features = ["csr"] }
 # The optimiser tests search the whole game tree, which is slow unoptimised.
 [profile.test]
 opt-level = 3
+
+# build.rs runs the first searches, which are slow unoptimised.
+[profile.dev.build-override]
+opt-level = 3
+
+[profile.release.build-override]
+opt-level = 3

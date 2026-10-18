@@ -18,6 +18,13 @@ pub struct MinimaxOptimiser {
     cache: RefCell<HashMap<StationSet, Output<Steps>>>,
 }
 
+impl MinimaxOptimiser {
+    /// Records a result worked out elsewhere, e.g. by the build script.
+    pub fn remember(&self, possible_stations: StationSet, output: Output<Steps>) {
+        self.cache.borrow_mut().insert(possible_stations, output);
+    }
+}
+
 impl Optimiser for MinimaxOptimiser {
     const NAME: &'static str = "minimax";
     const COST: &'static str = "worst case number of guesses";

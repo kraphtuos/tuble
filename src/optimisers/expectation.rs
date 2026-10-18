@@ -43,6 +43,13 @@ pub struct ExpectationOptimiser {
     cache: RefCell<HashMap<StationSet, Output<Expectation>>>,
 }
 
+impl ExpectationOptimiser {
+    /// Records a result worked out elsewhere, e.g. by the build script.
+    pub fn remember(&self, possible_stations: StationSet, output: Output<Expectation>) {
+        self.cache.borrow_mut().insert(possible_stations, output);
+    }
+}
+
 impl Optimiser for ExpectationOptimiser {
     const NAME: &'static str = "expectation";
     const COST: &'static str = "expected number of guesses";

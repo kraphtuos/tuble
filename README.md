@@ -62,6 +62,10 @@ Both are JSON arrays that are also valid Rust array literals, so they are
 compiled in with `include!`. The tests check the distances are symmetric and
 zero only between a station and itself.
 
+Searching from every station for the minimax and expectation first guesses
+is most of the work of showing the first step, so `build.rs` does it at
+compile time and the app starts with those results.
+
 ## Development
 
 ```
